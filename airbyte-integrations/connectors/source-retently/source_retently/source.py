@@ -66,8 +66,8 @@ class RetentlyStream(HttpStream):
         stream_slice: Mapping[str, Any] = None,
         next_page_token: Mapping[str, Any] = None,
     ) -> Iterable[Mapping]:
-        data = response.json().get("data") or response.json()[self.data_alias]
-        if type(data) == 'list' :
+        data = response.json().get("data") or response.json()
+        if type(data) == list :
             stream_data = data.get(self.json_path) if self.json_path else data
             if stream_data:
                 for d in stream_data:
@@ -98,7 +98,6 @@ class RetentlyStream(HttpStream):
 
 class Customers(RetentlyStream):
     json_path = "subscribers"
-    data_alias = None
 
     def path(
         self, stream_state: Mapping[str, Any] = None, stream_slice: Mapping[str, Any] = None, next_page_token: Mapping[str, Any] = None
@@ -108,7 +107,6 @@ class Customers(RetentlyStream):
 
 class Companies(RetentlyStream):
     json_path = "companies"
-    data_alias = None
 
     def path(
         self, stream_state: Mapping[str, Any] = None, stream_slice: Mapping[str, Any] = None, next_page_token: Mapping[str, Any] = None
@@ -118,20 +116,17 @@ class Companies(RetentlyStream):
 
 class Reports(RetentlyStream):
     json_path = None
-    data_alias = None
 
     def path(
         self, stream_state: Mapping[str, Any] = None, stream_slice: Mapping[str, Any] = None, next_page_token: Mapping[str, Any] = None
     ) -> str:
         return "reports"
-
     # does not support pagination
     def next_page_token(self, response: requests.Response) -> Optional[Mapping[str, Any]]:
         return None
 
 class Nps(RetentlyStream):
     json_path = None
-    data_alias = None
 
     def path(
         self, stream_state: Mapping[str, Any] = None, stream_slice: Mapping[str, Any] = None, next_page_token: Mapping[str, Any] = None
@@ -143,8 +138,7 @@ class Nps(RetentlyStream):
         return None
 
 class Campaigns(RetentlyStream):
-    json_path = None
-    data_alias = "campaigns"
+    json_path = "campaigns"
 
     def path(
         self, stream_state: Mapping[str, Any] = None, stream_slice: Mapping[str, Any] = None, next_page_token: Mapping[str, Any] = None
