@@ -35,7 +35,7 @@ class SourceRetently(AbstractSource):
     def check_connection(self, logger, config) -> Tuple[bool, any]:
         try:
             auth = self.get_authenticator(config)
-            stream = Companies(auth)
+            stream = Customers(auth)
             records = stream.read_records(sync_mode=SyncMode.full_refresh)
             next(records)
             return True, None
@@ -44,7 +44,7 @@ class SourceRetently(AbstractSource):
 
     def streams(self, config: Mapping[str, Any]) -> List[Stream]:
         auth = self.get_authenticator(config)
-        return [Customers(auth), Companies(auth), Reports(auth)]
+        return [Customers(auth), Companies(auth), Reports(auth), Nps(auth), Campaigns(auth), Feedback(auth)]
 
 
 class RetentlyStream(HttpStream):
@@ -66,12 +66,15 @@ class RetentlyStream(HttpStream):
         stream_slice: Mapping[str, Any] = None,
         next_page_token: Mapping[str, Any] = None,
     ) -> Iterable[Mapping]:
-        data = response.json().get("data")
-        if data:
+        data = response.json().get("data") or response.json()[self.data_alias]
+        if type(data) == 'list' :
             stream_data = data.get(self.json_path) if self.json_path else data
             if stream_data:
                 for d in stream_data:
                     yield d
+        else:
+            yield data
+
 
     def next_page_token(self, response: requests.Response) -> Optional[Mapping[str, Any]]:
         json = response.json().get("data", dict())
@@ -95,6 +98,7 @@ class RetentlyStream(HttpStream):
 
 class Customers(RetentlyStream):
     json_path = "subscribers"
+    data_alias = None
 
     def path(
         self, stream_state: Mapping[str, Any] = None, stream_slice: Mapping[str, Any] = None, next_page_token: Mapping[str, Any] = None
@@ -104,6 +108,7 @@ class Customers(RetentlyStream):
 
 class Companies(RetentlyStream):
     json_path = "companies"
+    data_alias = None
 
     def path(
         self, stream_state: Mapping[str, Any] = None, stream_slice: Mapping[str, Any] = None, next_page_token: Mapping[str, Any] = None
@@ -113,6 +118,7 @@ class Companies(RetentlyStream):
 
 class Reports(RetentlyStream):
     json_path = None
+    data_alias = None
 
     def path(
         self, stream_state: Mapping[str, Any] = None, stream_slice: Mapping[str, Any] = None, next_page_token: Mapping[str, Any] = None
@@ -122,3 +128,33 @@ class Reports(RetentlyStream):
     # does not support pagination
     def next_page_token(self, response: requests.Response) -> Optional[Mapping[str, Any]]:
         return None
+
+class Nps(RetentlyStream):
+    json_path = None
+    data_alias = None
+
+    def path(
+        self, stream_state: Mapping[str, Any] = None, stream_slice: Mapping[str, Any] = None, next_page_token: Mapping[str, Any] = None
+    ) -> str:
+        return "nps/score"
+
+    # does not support pagination
+    def next_page_token(self, response: requests.Response) -> Optional[Mapping[str, Any]]:
+        return None
+
+class Campaigns(RetentlyStream):
+    json_path = None
+    data_alias = "campaigns"
+
+    def path(
+        self, stream_state: Mapping[str, Any] = None, stream_slice: Mapping[str, Any] = None, next_page_token: Mapping[str, Any] = None
+    ) -> str:
+        return "campaigns"
+
+class Feedback(RetentlyStream):
+    json_path = "responses"
+
+    def path(
+        self, stream_state: Mapping[str, Any] = None, stream_slice: Mapping[str, Any] = None, next_page_token: Mapping[str, Any] = None
+    ) -> str:
+        return "feedback"
