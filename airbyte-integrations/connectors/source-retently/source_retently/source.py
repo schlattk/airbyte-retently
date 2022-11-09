@@ -67,11 +67,10 @@ class RetentlyStream(HttpStream):
         next_page_token: Mapping[str, Any] = None,
     ) -> Iterable[Mapping]:
         data = response.json().get("data") or response.json()
-        if type(data) == list :
-            stream_data = data.get(self.json_path) if self.json_path else data
-            if stream_data:
-                for d in stream_data:
-                    yield d
+        stream_data = data.get(self.json_path) if self.json_path else data
+        if type(stream_data) == list :
+            for d in stream_data:
+                yield d
         else:
             yield data
 
