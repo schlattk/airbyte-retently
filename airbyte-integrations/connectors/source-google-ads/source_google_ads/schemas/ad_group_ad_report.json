@@ -50,6 +50,9 @@
     "segments.ad_network_type": {
       "type": ["null", "string"]
     },
+    "segments.keyword.ad_group_criterion": {
+      "type": ["null", "string"]
+    },
     "ad_group_ad.ad_strength": {
       "type": ["null", "string"]
     },
